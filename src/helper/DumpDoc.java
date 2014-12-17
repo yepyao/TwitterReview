@@ -157,29 +157,71 @@ public class DumpDoc {
 		}
 	}
 
-	public void dumpWeibo() {
+	public void dumpWeiboTextpart() {
+		try {
+			PrintStream outp_textpart = new PrintStream("weibo_textpart.txt");
+			try {
+				dbConnector conn = new dbConnector("weibo");
+				int id = 0;
+				int batch = 10000;
+				LinkedList<Weibo> weibos = null;
+				while (true) {
+					System.out.println("Begin to fetch...");
+					weibos = conn.getWeibo(id, batch);
+					
+
+					for (Weibo weibo : weibos) {
+						if (weibo.id > id)
+							id = weibo.id;
+						
+						// split
+						String[] words = weibo.content_segs.split(" ");
+						LinkedList<String> parts = getTextpart(words);
+						for(String p:parts){
+							outp_textpart.println(p);
+						}
+						outp_textpart.println();
+					}
+					if (weibos.size() < batch)
+						break;
+					System.out.println("Seg OK! id: " + id); // break;
+				}
+				conn.close();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	public LinkedList<String> getTextpart(String[] words){
+		String part = ""; 
+		LinkedList<String> parts = new LinkedList<String>();
+		for (String word : words) {
+			if (isPunctuation(word)) {
+				if (part!="") parts.add(part);
+				part = "";
+			}
+			else part += word;
+		}
+		if (part!="") parts.add(part);
+		return parts;
+	}
+
+	private boolean isPunctuation(String word) {
+		Pattern pattern = Pattern.compile("^[\\u4e00-\\u9fa5\\w、\\(\\)（）]*?$");
+		Matcher matcher = pattern.matcher(word);
+		if (matcher.find()) return false;
+		return true;
+	}
+
+	public void dumpDianping() {
 		try {
 			PrintStream outp = new PrintStream("dumpdocs.txt");
-
 			int doc_id = 1;
-			/*
-			 * try { dbConnector conn = new dbConnector("weibo");
-			 * 
-			 * int id = 0; int batch = 10000; LinkedList<Weibo> weibos = null;
-			 * while (true) { System.out.println("Begin to fetch..."); weibos =
-			 * conn.getWeibo(id, batch); id += weibos.size();
-			 * 
-			 * for (Weibo weibo : weibos) {
-			 * 
-			 * outp.print((doc_id++)+", 1, "+weibo.id+", "); // split String[]
-			 * words = weibo.content_segs.split(" "); for (String word : words)
-			 * { if (!isMeaningfulWord(word)) continue; if
-			 * (!dict.containsKey(word)) dict.put(word, cid++);
-			 * outp.print(dict.get(word) + " "); } outp.println(); } if
-			 * (weibos.size() < batch) break; System.out.println("Seg OK! id: "
-			 * + id); // break; } doc_size = id; conn.close(); } catch
-			 * (Exception ex) { ex.printStackTrace(); }
-			 */
+
 			try {
 				// get dianping
 				dbConnector conn = new dbConnector("dianping");

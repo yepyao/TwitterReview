@@ -1,0 +1,51 @@
+﻿first version
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Changes to be committed:
+#	new file:   .classpath
+#	new file:   .gitignore
+#	new file:   .project
+#	new file:   .settings/org.eclipse.jdt.core.prefs
+#	new file:   captcha.jpg
+#	new file:   "dianping_shopids - \345\211\257\346\234\254 (2).txt"
+#	new file:   "dianping_shopids - \345\211\257\346\234\254.txt"
+#	new file:   dianping_shopids.txt
+#	new file:   dict.txt
+#	new file:   dict_MI.txt
+#	new file:   dict_timeline.txt
+#	new file:   dumpdocs.txt
+#	new file:   lib/commons-cli-1.2.jar
+#	new file:   lib/commons-codec-1.6.jar
+#	new file:   lib/commons-logging-1.1.3.jar
+#	new file:   lib/fluent-hc-4.3.6.jar
+#	new file:   lib/httpclient-4.3.6.jar
+#	new file:   lib/httpclient-cache-4.3.6.jar
+#	new file:   lib/httpcore-4.3.3.jar
+#	new file:   lib/httpcore-ab-4.3.3.jar
+#	new file:   lib/httpcore-nio-4.3.3.jar
+#	new file:   lib/httpmime-4.3.6.jar
+#	new file:   lib/json.org.jar
+#	new file:   lib/mysql-connector-java-5.1.34-bin.jar
+#	new file:   output.txt
+#	new file:   recent_get.html
+#	new file:   src/Crawler/DianpingCrawler.java
+#	new file:   src/Crawler/DianpingParser.java
+#	new file:   src/Crawler/TimelineCrawler.java
+#	new file:   src/Crawler/WeiboCrawler.java
+#	new file:   src/Main.java
+#	new file:   src/database/Dianping.java
+#	new file:   src/database/Review.java
+#	new file:   src/database/Shop.java
+#	new file:   src/database/Weibo.java
+#	new file:   src/database/dbConnector.java
+#	new file:   src/helper/DumpDoc.java
+#	new file:   src/helper/ParseTMT.java
+#	new file:   src/helper/SegDemo.java
+#	new file:   src/helper/SegWapper.java
+#	new file:   src/helper/Word.java
+#	new file:   src/models/MISum.java
+#	new file:   src/models/Weight.java
+#	new file:   stopword.txt
+#
+

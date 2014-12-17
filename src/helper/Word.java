@@ -6,6 +6,8 @@ public class Word {
 	public int times_timeline = 0;
 	public int wid;
 	public double MI;
+	public double pos_NB;
+	public double neg_NB;
 
 	public Word(int wid, String word) {
 		this.word = word;
