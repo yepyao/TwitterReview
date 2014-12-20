@@ -19,15 +19,17 @@ public class Main {
 		// SegWapper segwapper = new SegWapper();
 		// segwapper.segWeibo();
 		// segwapper.segDianping();
-		 DumpDoc dumper = new DumpDoc();
-		 dumper.dumpWeiboTextpart();
+		DumpDoc dumper = new DumpDoc();
+		// dumper.dumpDianping();
 		// dumper.calcMI();
+		dumper.dumpWeiboTextpart();
+
 		// dumper.removeTimelineDup();
 		// ParseTMT tmt = new ParseTMT();
 		// Weight weight = new Weight();
 		// weight.calcScore();
-		//MISum mi = new MISum();
-		//mi.calcScore();
+		// MISum mi = new MISum();
+		// mi.calcScore();
 		// TimelineCrawler crawl = new TimelineCrawler();
 		// crawl.crawl();
 	}

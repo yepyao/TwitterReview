@@ -12,7 +12,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Text;
+
+import models.Jahmm;
+import models.MISum;
+import models.NB;
 import database.Dianping;
+import database.Textpart;
 import database.Weibo;
 import database.dbConnector;
 
@@ -159,7 +165,11 @@ public class DumpDoc {
 
 	public void dumpWeiboTextpart() {
 		try {
+			NB nb = new NB();
+			MISum mi = new MISum();
+			Jahmm jahmm = new Jahmm(2, 3);
 			PrintStream outp_textpart = new PrintStream("weibo_textpart.txt");
+			PrintStream outp_hmm = new PrintStream("hmm/hmm_o.txt");
 			try {
 				dbConnector conn = new dbConnector("weibo");
 				int id = 0;
@@ -168,52 +178,83 @@ public class DumpDoc {
 				while (true) {
 					System.out.println("Begin to fetch...");
 					weibos = conn.getWeibo(id, batch);
-					
 
 					for (Weibo weibo : weibos) {
 						if (weibo.id > id)
 							id = weibo.id;
-						
+
 						// split
 						String[] words = weibo.content_segs.split(" ");
-						LinkedList<String> parts = getTextpart(words);
-						for(String p:parts){
-							outp_textpart.println(p);
+						LinkedList<Textpart> parts = getTextpart(words);
+						LinkedList<double[]> sequence = new LinkedList<double[]>();
+						for (Textpart p : parts) {
+							double nb_score = nb.getScore(p.seg);
+							double miavg_score = mi.getAvgScore(p.seg);
+							double misum_score = mi.getSumScore(p.seg);
+							outp_textpart.println(String.format("%.6f",
+									nb_score)
+									+ "\t"
+									+ String.format("%.6f", miavg_score)
+									+ "\t"
+									+ String.format("%.6f", misum_score)
+									+ "\t"
+									+ p.text);
+							outp_hmm.print("["
+									+ String.format("%.10f", nb_score) + " "
+									+ String.format("%.10f", miavg_score) + " "
+									+ String.format("%.10f", misum_score)
+									+ "]; ");
+							double[] vector = { nb_score, miavg_score,
+									misum_score };
+							sequence.add(vector);
 						}
+						jahmm.addSequence(sequence);
+						outp_hmm.println();
 						outp_textpart.println();
 					}
 					if (weibos.size() < batch)
 						break;
-					System.out.println("Seg OK! id: " + id); // break;
+					System.out.println("Seg OK! id: " + id);
+					//break;
 				}
 				conn.close();
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
+			jahmm.learn(20);
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 	}
-	
-	public LinkedList<String> getTextpart(String[] words){
-		String part = ""; 
-		LinkedList<String> parts = new LinkedList<String>();
+
+	public LinkedList<Textpart> getTextpart(String[] words) {
+		Textpart part = new Textpart();
+		LinkedList<Textpart> parts = new LinkedList<Textpart>();
 		for (String word : words) {
 			if (isPunctuation(word)) {
-				if (part!="") parts.add(part);
-				part = "";
+				if (part.text != "") {
+					part.text += word;
+					part.seg.add(word);
+					parts.add(part);
+				}
+				part = new Textpart();
+			} else {
+				part.text += word;
+				part.seg.add(word);
 			}
-			else part += word;
 		}
-		if (part!="") parts.add(part);
+		if (part.text != "") {
+			parts.add(part);
+		}
 		return parts;
 	}
 
 	private boolean isPunctuation(String word) {
 		Pattern pattern = Pattern.compile("^[\\u4e00-\\u9fa5\\w、\\(\\)（）]*?$");
 		Matcher matcher = pattern.matcher(word);
-		if (matcher.find()) return false;
+		if (matcher.find())
+			return false;
 		return true;
 	}
 

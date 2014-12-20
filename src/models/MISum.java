@@ -66,4 +66,19 @@ public class MISum {
 		}
 
 	}
+	
+	public double getSumScore(LinkedList<String> text){
+		double sum=0;
+		for(String word: text){
+			if (miMap.containsKey(word)) sum+=miMap.get(word);
+		}
+		return sum;
+	}
+	public double getAvgScore(LinkedList<String> text){
+		double sum=0;
+		for(String word: text){
+			if (miMap.containsKey(word)) sum+=miMap.get(word);
+		}
+		return sum/text.size();
+	}
 }
