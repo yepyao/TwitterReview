@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -18,6 +19,7 @@ import models.Jahmm;
 import models.MISum;
 import models.NB;
 import database.Dianping;
+import database.NewWeibo;
 import database.Textpart;
 import database.Weibo;
 import database.dbConnector;
@@ -168,30 +170,37 @@ public class DumpDoc {
 			NB nb = new NB();
 			MISum mi = new MISum();
 			Jahmm jahmm = new Jahmm(2, 3);
-			PrintStream outp_textpart = new PrintStream("weibo_textpart.txt");
+			LinkedList<String> outp_textpart_lines = new LinkedList<String>();
+			LinkedList<String> weiboidlist = new LinkedList<String>();
+			LinkedList<String> querylist = new LinkedList<String>();
 			PrintStream outp_hmm = new PrintStream("hmm/hmm_o.txt");
-			try {
+			double[][] scale = new double[3][2];
+			for (int i = 0; i < 3; i++) {
+				scale[i][0] = Double.MAX_VALUE;
+				scale[i][1] = -Double.MAX_VALUE;
+			}
+
 				dbConnector conn = new dbConnector("weibo");
 				int id = 0;
 				int batch = 10000;
 				LinkedList<Weibo> weibos = null;
 				while (true) {
 					System.out.println("Begin to fetch...");
-					weibos = conn.getWeibo(id, batch);
-
+					weibos = conn.getWeiboSimplified(id, batch);
+					System.out.println("Fetch line: "+weibos.size());
 					for (Weibo weibo : weibos) {
 						if (weibo.id > id)
 							id = weibo.id;
-
+						
 						// split
-						String[] words = weibo.content_segs.split(" ");
+						String[] words = weibo.content_segs.split("\\t");
 						LinkedList<Textpart> parts = getTextpart(words);
 						LinkedList<double[]> sequence = new LinkedList<double[]>();
 						for (Textpart p : parts) {
 							double nb_score = nb.getScore(p.seg);
 							double miavg_score = mi.getAvgScore(p.seg);
-							double misum_score = mi.getSumScore(p.seg);
-							outp_textpart.println(String.format("%.6f",
+							double misum_score = Math.log(mi.getSumScore(p.seg)+1);
+							outp_textpart_lines.add(String.format("%.6f",
 									nb_score)
 									+ "\t"
 									+ String.format("%.6f", miavg_score)
@@ -204,33 +213,92 @@ public class DumpDoc {
 									+ String.format("%.10f", miavg_score) + " "
 									+ String.format("%.10f", misum_score)
 									+ "]; ");
+							if (nb_score < scale[0][0])
+								scale[0][0] = nb_score;
+							if (nb_score > scale[0][1])
+								scale[0][1] = nb_score;
+							if (miavg_score < scale[1][0])
+								scale[1][0] = miavg_score;
+							if (miavg_score > scale[1][1])
+								scale[1][1] = miavg_score;
+							if (misum_score < scale[2][0])
+								scale[2][0] = misum_score;
+							if (misum_score > scale[2][1])
+								scale[2][1] = misum_score;
 							double[] vector = { nb_score, miavg_score,
 									misum_score };
 							sequence.add(vector);
 						}
-						jahmm.addSequence(sequence);
+						if (sequence.size() > 1) {
+							jahmm.addSequence(sequence);
+							outp_textpart_lines.add("#" + weibo.weiboId + " "
+									+ sequence.size());
+							weiboidlist.add(weibo.weiboId);
+							querylist.add(weibo.query);
+						} else {
+							if (sequence.size() == 1)
+								outp_textpart_lines.removeLast();
+						}
 						outp_hmm.println();
-						outp_textpart.println();
+
 					}
+					System.out.println("Seg OK! id: " + id);
 					if (weibos.size() < batch)
 						break;
-					System.out.println("Seg OK! id: " + id);
+					
 					//break;
 				}
-				conn.close();
-			} catch (Exception ex) {
-				ex.printStackTrace();
+			
+			
+			System.out.print("scale param: ");
+			for(int i=0;i<3;i++){
+				System.out.print("[ "+scale[i][0]+","+scale[i][1]+" ]");
 			}
-			jahmm.learn(20);
+			System.out.println();
+			jahmm.scale(scale);
+			jahmm.learn(40);
+			LinkedList<LinkedList<Integer>> lists = jahmm.getStateList();
 
+			Iterator<String> iter = outp_textpart_lines.iterator();
+			PrintStream outp_textpart = new PrintStream("weibo_textpart.txt");
+			int count = 0;
+			for (LinkedList<Integer> list : lists) {
+				String label = "";
+				for (Integer state : list) {
+					outp_textpart.println(state + " - " + iter.next());
+					if (state==0) label+="0";
+					else label+="1";
+				}
+				outp_textpart.println(iter.next()+" "+label);
+				conn.addLabelResult(querylist.get(count),weiboidlist.get(count),label,"yep_hmm");
+				count++;
+			}
+			outp_textpart.close();
+			outp_hmm.close();
+			conn.close();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 	}
 
 	public LinkedList<Textpart> getTextpart(String[] words) {
-		Textpart part = new Textpart();
 		LinkedList<Textpart> parts = new LinkedList<Textpart>();
+		
+		NewWeibo nw = new NewWeibo();
+		nw.segs = words;
+		nw.update();
+		int length = nw.parts.size();
+		
+		for(int i=0;i<length;i++){
+			Textpart part = null;
+			part = new Textpart();
+			part.text = nw.parts.get(i);
+			part.seg = (LinkedList<String>)nw.partsegs.get(i);
+			//System.out.println(part.text+" "+part.seg+" "+nw.parts.size());
+			parts.add(part);
+		}
+		
+		/*
 		for (String word : words) {
 			if (isPunctuation(word)) {
 				if (part.text != "") {
@@ -247,6 +315,7 @@ public class DumpDoc {
 		if (part.text != "") {
 			parts.add(part);
 		}
+		*/
 		return parts;
 	}
 

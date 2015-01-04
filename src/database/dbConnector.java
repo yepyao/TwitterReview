@@ -70,6 +70,36 @@ public class dbConnector {
 
 	}
 
+	public void setWeiboPoi(int id, String poi) {
+		String cmd = "";
+		try {
+			cmd = "UPDATE `weibo` " + "SET poi = '" + poi + "' " + "WHERE id='"
+					+ id + "'";
+			Statement stat = conn.createStatement();
+			stat.executeUpdate(cmd);
+
+		} catch (Exception ex) {
+			System.out.println(cmd);
+			ex.printStackTrace();
+		}
+
+	}
+
+	public void setWeiboPic(int id, int pic) {
+		String cmd = "";
+		try {
+			cmd = "UPDATE `weibo` " + "SET pic = " + pic + " " + "WHERE id='"
+					+ id + "'";
+			Statement stat = conn.createStatement();
+			stat.executeUpdate(cmd);
+
+		} catch (Exception ex) {
+			System.out.println(cmd);
+			ex.printStackTrace();
+		}
+
+	}
+
 	public LinkedList<Weibo> getWeibo(int id, int limit) {
 		if (database != "weibo") {
 			System.err.println("wrong database");
@@ -80,7 +110,7 @@ public class dbConnector {
 		try {
 			Statement st = conn.createStatement();
 			ResultSet rs = st
-					.executeQuery("SELECT id,weiboId,content,content_segs FROM weibo WHERE id> '"
+					.executeQuery("SELECT id,rawhtml,weiboId,content,content_segs,query,poi FROM weibo WHERE id> '"
 							+ id + "' ORDER BY id LIMIT " + limit);
 
 			// 循环读取数据
@@ -88,7 +118,60 @@ public class dbConnector {
 				// 打印数据
 				weibos.add(new Weibo(Integer.parseInt(rs.getString("id")), rs
 						.getString("weiboId"), recoverString(rs
-						.getString("content")), rs.getString("content_segs")));
+						.getString("content")), rs.getString("content_segs"),
+						rs.getString("query"), rs.getString("rawhtml"), rs
+								.getString("poi")));
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return weibos;
+	}
+
+	public LinkedList<Weibo> getWeibo(String query) {
+		LinkedList<Weibo> weibos = new LinkedList<Weibo>();
+		try {
+			Statement st = conn.createStatement();
+			ResultSet rs = st
+					.executeQuery("SELECT id,rawhtml,weiboId,content,content_segs,query,poi FROM weibo WHERE query='"
+							+ query + "' and poi !=''");
+
+			// 循环读取数据
+			while (rs.next()) {
+				// 打印数据
+				weibos.add(new Weibo(Integer.parseInt(rs.getString("id")), rs
+						.getString("weiboId"), recoverString(rs
+						.getString("content")), rs.getString("content_segs"),
+						rs.getString("query"), rs.getString("rawhtml"), rs
+								.getString("poi")));
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return weibos;
+
+	}
+
+	public LinkedList<Weibo> getWeiboSimplified(int id, int limit) {
+		if (database != "weibo") {
+			System.err.println("wrong database");
+			System.exit(1);
+			return null;
+		}
+		LinkedList<Weibo> weibos = new LinkedList<Weibo>();
+		try {
+			Statement st = conn.createStatement();
+			ResultSet rs = st
+					.executeQuery("SELECT id,weiboid,content,segs,query FROM weibo_simplified WHERE id> '"
+							+ id + "' ORDER BY id LIMIT " + limit);
+
+			// 循环读取数据
+			while (rs.next()) {
+				// 打印数据
+				weibos.add(new Weibo(Integer.parseInt(rs.getString("id")), rs
+						.getString("weiboId"), recoverString(rs
+						.getString("content")), rs.getString("segs"), rs
+						.getString("query"), "", ""));
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -114,7 +197,8 @@ public class dbConnector {
 				// 打印数据
 				weibos.add(new Weibo(Integer.parseInt(rs.getString("id")), rs
 						.getString("weiboId"), recoverString(rs
-						.getString("content")), rs.getString("content_segs")));
+						.getString("content")), rs.getString("content_segs"),
+						"", "", ""));
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -241,6 +325,102 @@ public class dbConnector {
 			Statement stat = conn.createStatement();
 			stat.executeUpdate(cmd);
 			System.out.println("delete method score '" + method + "' OK!");
+		} catch (Exception ex) {
+			System.out.println(cmd);
+			ex.printStackTrace();
+		}
+
+	}
+
+	public void addLabelResult(String query, String weiboId, String label,
+			String labeler) {
+		String cmd = "";
+		try {
+			cmd = "INSERT INTO `seglabel` (`query`, `weiboId`, `label`, `labeler`) VALUES ('"
+					+ query
+					+ "','"
+					+ weiboId
+					+ "','"
+					+ label
+					+ "','"
+					+ labeler
+					+ "')";
+			Statement stat = conn.createStatement();
+			stat.executeUpdate(cmd);
+
+		} catch (Exception ex) {
+			System.out.println(cmd);
+			ex.printStackTrace();
+		}
+
+	}
+
+	public void addPos(String query, Position pos) {
+		String cmd = "";
+		try {
+			cmd = "INSERT INTO `shop_positions` (`query`, `shop_id`, `shop_name`, `position`) VALUES ('"
+					+ query
+					+ "',"
+					+ pos.shop.id
+					+ ",'"
+					+ pos.shop.name
+					+ "','"
+					+ pos.position + "')";
+			Statement stat = conn.createStatement();
+			stat.executeUpdate(cmd);
+
+		} catch (Exception ex) {
+			System.out.println(cmd);
+			ex.printStackTrace();
+		}
+
+	}
+
+	public LinkedList<Query> getQuerys() {
+		LinkedList<Query> querys = new LinkedList<Query>();
+		try {
+			Statement st = conn.createStatement();
+			ResultSet rs = st.executeQuery("SELECT query FROM querys");
+
+			while (rs.next()) {
+				String query = rs.getString("query");
+				querys.add(new Query(query));
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return querys;
+	}
+
+	public LinkedList<GPS> getGPS(String query) {
+		LinkedList<GPS> pois = new LinkedList<GPS>();
+		try {
+			Statement st = conn.createStatement();
+			ResultSet rs = st
+					.executeQuery("SELECT position FROM shop_positions where query = '"
+							+ query + "'");
+
+			while (rs.next()) {
+				String poi = rs.getString("position");
+				String[] arr = poi.split(",");
+				Double lnt = Double.parseDouble(arr[0]);
+				Double lat = Double.parseDouble(arr[1]);
+				pois.add(new GPS(lnt, lat));
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return pois;
+	}
+
+	public void setWeiboDistance(int id, double distance) {
+		String cmd = "";
+		try {
+			cmd = "UPDATE `weibo` " + "SET distance = " + distance
+					+ " WHERE id='" + id + "'";
+			Statement stat = conn.createStatement();
+			stat.executeUpdate(cmd);
+
 		} catch (Exception ex) {
 			System.out.println(cmd);
 			ex.printStackTrace();

@@ -1,11 +1,17 @@
+import java.util.HashMap;
+import java.util.Stack;
+
 import models.MISum;
 import models.Weight;
+import helper.CalcDistanceForFixPoiQuery;
 import helper.DumpDoc;
+import helper.HtmlParser;
 import helper.ParseTMT;
 import helper.SegDemo;
 import helper.SegWapper;
 import Crawler.DianpingCrawler;
 import Crawler.DianpingParser;
+import Crawler.DianpingPosition;
 import Crawler.TimelineCrawler;
 import Crawler.WeiboCrawler;
 
@@ -19,10 +25,10 @@ public class Main {
 		// SegWapper segwapper = new SegWapper();
 		// segwapper.segWeibo();
 		// segwapper.segDianping();
-		DumpDoc dumper = new DumpDoc();
+		//DumpDoc dumper = new DumpDoc();
 		// dumper.dumpDianping();
 		// dumper.calcMI();
-		dumper.dumpWeiboTextpart();
+		//dumper.dumpWeiboTextpart();
 
 		// dumper.removeTimelineDup();
 		// ParseTMT tmt = new ParseTMT();
@@ -32,5 +38,9 @@ public class Main {
 		// mi.calcScore();
 		// TimelineCrawler crawl = new TimelineCrawler();
 		// crawl.crawl();
+		//HtmlParser hp = new HtmlParser();
+		//hp.parse();
+		//DianpingPosition pos = new DianpingPosition();
+		new CalcDistanceForFixPoiQuery(); 
 	}
 }

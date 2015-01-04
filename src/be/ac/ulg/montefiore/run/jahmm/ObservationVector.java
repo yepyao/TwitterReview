@@ -62,6 +62,13 @@ implements Cloneable, CentroidFactory<ObservationVector>
 			this.value[i] = value[i];
 	}
 	
+	public void setValue(double[] value)
+	{
+		
+		for (int i = 0 ; i < value.length; i++)
+			this.value[i] = value[i];
+	}
+	
 	
 	/**
 	 * Returns the dimension of this vector.

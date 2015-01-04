@@ -40,6 +40,7 @@ import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import database.Position;
 import database.Shop;
 
 public class DianpingCrawler {
@@ -47,8 +48,6 @@ public class DianpingCrawler {
 	HttpClientContext context;
 	LinkedList<Shop> shopids;
 	int banedtime = 0;
-
-	
 
 	public DianpingCrawler() {
 		HttpHost proxy = new HttpHost("172.16.2.20", 3128);
@@ -66,6 +65,9 @@ public class DianpingCrawler {
 		CookieStore cookie = new BasicCookieStore();
 		context.setCookieStore(cookie);
 
+	}
+
+	public void crawl() {
 		shopids = new LinkedList<Shop>();
 		getIds();
 		getHtmls();
@@ -225,12 +227,12 @@ public class DianpingCrawler {
 				outp.println();
 				outp.close();
 
-				// Thread.sleep(1000);
+				Thread.sleep(2000);
 
 				baned = getBanedState(content, url);
 			} catch (Exception ex) {
 				ex.printStackTrace();
-				System.exit(1);
+				// System.exit(1);
 			}
 		}
 		return content;
@@ -255,85 +257,103 @@ public class DianpingCrawler {
 			}
 			System.out.println("Wake Up!");
 
-			BasicClientCookie newCookie = new BasicClientCookie("_hc.v",
-					"\"\\\"22d88fa0-dcb1-4caa-8f5f-0c25b44cc21b.1416658093\\\"\"");
-			newCookie.setVersion(0);
-			newCookie.setDomain(".dianping.com");
-			newCookie.setPath("/");
-
-			context.getCookieStore().addCookie(newCookie);
-			// download captcha
-			// try {
-			// HttpGet get = new HttpGet(
-			// "http://www.dianping.com/alpaca/captcha.jpg");
-			// get.setHeader("User-Agent",
-			// "Mozilla/5.0 (Windows NT 5.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1");
-			// get.setHeader("Referer", referer);
-			// get.setHeader("Accept", "image/webp,*/*;q=0.8");
+			// BasicClientCookie newCookie = new BasicClientCookie("_hc.v",
+			// "\"\\\"22d88fa0-dcb1-4caa-8f5f-0c25b44cc21b.1416658093\\\"\"");
+			// newCookie.setVersion(0);
+			// newCookie.setDomain(".dianping.com");
+			// newCookie.setPath("/");
 			//
-			// HttpResponse res = client.execute(get, context);
-			// res.getEntity().getContent().close();
-			// // EntityUtils.consume(res.getEntity());
-			// //
-			// // // HttpClientContext clientContext =
-			// // HttpClientContext.adapt(context);
-			// // // Header headers[] =
-			// // clientContext.getRequest().getAllHeaders();
-			// // // for(Header h:headers){
-			// // // System.out.println(h.getName() + ": " + h.getValue());
-			// // // }
-			// // // System.out.println();
-			// //
-			// // File storeFile = new File("captcha.jpg");
-			// // FileOutputStream output = new FileOutputStream(storeFile);
-			// //
-			// // // 得到网络资源的字节数组,并写入文件
-			// // HttpEntity entity = res.getEntity();
-			// // if (entity != null) {
-			// // InputStream instream = entity.getContent();
-			// //
-			// // byte b[] = new byte[1024];
-			// // int j = 0;
-			// // while ((j = instream.read(b)) != -1) {
-			// // output.write(b, 0, j);
-			// // }
-			// // output.flush();
-			// // output.close();
-			// // }
-			// //
-			// // Scanner input = new Scanner(System.in);
-			// // System.out.println("输入验证码:");
-			// // String code = input.nextLine();
-			// //
-			// // HttpPost login = new HttpPost(
-			// // "http://www.dianping.com/alpaca/captcha.jpg");
-			// // login.setHeader("Referer", referer);
-			// // LinkedList<NameValuePair> params = new
-			// // LinkedList<NameValuePair>();
-			// // params.add(new BasicNameValuePair("vode", code));
-			// // login.setEntity(new UrlEncodedFormEntity(params));
-			// // res = client.execute(login, context);
-			// // System.out.println("code has been send!");
-			// // BufferedReader rd = new BufferedReader(new InputStreamReader(
-			// // res.getEntity().getContent()));
-			// //
-			// // StringBuffer result = new StringBuffer();
-			// // String line = "";
-			// // while ((line = rd.readLine()) != null) {
-			// // result.append(line);
-			// // }
-			// //
-			// // content = result.toString();
-			// //
-			// // System.out.println(content);
-			// } catch (Exception ex) {
-			// ex.printStackTrace();
-			// System.exit(1);
-			// }
+			// context.getCookieStore().addCookie(newCookie);
+			// download captcha
+			try {
+				HttpGet get = new HttpGet(
+						"http://www.dianping.com/alpaca/captcha.jpg");
+				get.setHeader("User-Agent",
+						"Mozilla/5.0 (Windows NT 5.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1");
+				get.setHeader("Referer", referer);
+				get.setHeader("Accept", "image/webp,*/*;q=0.8");
+
+				HttpResponse res = client.execute(get, context);
+				//res.getEntity().getContent().close();
+				//EntityUtils.consume(res.getEntity());
+
+				// HttpClientContext clientContext
+				// =HttpClientContext.adapt(context);
+				// Header headers[] = clientContext.getRequest().getAllHeaders();
+				// for(Header h:headers){
+				// System.out.println(h.getName() + ": " + h.getValue());
+				// }
+				// System.out.println();
+
+				File storeFile = new File("captcha.jpg");
+				FileOutputStream output = new FileOutputStream(storeFile);
+
+				// 得到网络资源的字节数组,并写入文件
+				HttpEntity entity = res.getEntity();
+				if (entity != null) {
+					InputStream instream = entity.getContent();
+
+					byte b[] = new byte[1024];
+					int j = 0;
+					while ((j = instream.read(b)) != -1) {
+						output.write(b, 0, j);
+					}
+					output.flush();
+					output.close();
+				}
+
+				Scanner input = new Scanner(System.in);
+				System.out.println("输入验证码:");
+				String code = input.nextLine();
+
+				HttpPost login = new HttpPost(
+						"http://www.dianping.com/alpaca/captcha.jpg");
+				login.setHeader("Referer", referer);
+				LinkedList<NameValuePair> params = new LinkedList<NameValuePair>();
+				params.add(new BasicNameValuePair("vode", code));
+				login.setEntity(new UrlEncodedFormEntity(params));
+				res = client.execute(login, context);
+				System.out.println("code has been send!");
+				BufferedReader rd = new BufferedReader(new InputStreamReader(
+						res.getEntity().getContent()));
+
+				StringBuffer result = new StringBuffer();
+				String line = "";
+				while ((line = rd.readLine()) != null) {
+					result.append(line);
+				}
+
+				content = result.toString();
+
+				System.out.println(content);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				System.exit(1);
+			}
 			return true;
 		}
 		banedtime = 0;
 		return false;
+	}
+
+	public LinkedList<Shop> getShopidsByQuery(String query) {
+		LinkedList<Shop> shops = getShopids("http://www.dianping.com/search/keyword/1/0_"
+				+ query);
+		return shops;
+	}
+
+	public Position getPosition(Shop shop) {
+		String content = getContent("http://www.dianping.com/shop/" + shop.id);
+
+		String pattern = "\\{lng:([\\d\\.]*?),lat:([\\d\\.]*?)\\}";
+		Pattern r = Pattern.compile(pattern);
+		Matcher m = r.matcher(content);
+		if (m.find()) {
+			return new Position(shop, m.group(1) + "," + m.group(2));
+		}
+		System.out.println(shop.id + " " + shop.name + " no position!");
+		return null;
+
 	}
 
 }
